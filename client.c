@@ -69,9 +69,7 @@ int main(int argc, char **argv) {
             break;
         }
     }
-
-    while(1) {
-        // 상대방 닉네임 입력 대기
+    // 상대방 닉네임 입력 대기
         printf("상대방의 대화방 입장 기다리는 중...\n");
         nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
         if(nRcv == SOCKET_ERROR) {
@@ -86,6 +84,9 @@ int main(int argc, char **argv) {
         }
 		
 		printf("%s\n", message);
+
+    while(1) {
+    
 
         // 메세지 전송
         printf("\n보낼 메시지 : ");

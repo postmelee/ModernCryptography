@@ -75,8 +75,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    while (1) {
-        // 닉네임 입력 대기
+// 닉네임 입력 대기
         printf("상대방의 대화방 입장 기다리는 중...\n");
         nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
 
@@ -92,6 +91,7 @@ int main(int argc, char** argv) {
         }
 
         printf("%s\n", message);
+    while (1) {
 
         // 메세지 수신 대기
         nRcv = recv(clntSock, message, sizeof(message) - 1, 0);

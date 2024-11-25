@@ -81,13 +81,13 @@ int main(int argc, char** argv) {
 
         if (nRcv == SOCKET_ERROR) {
             printf("수신 에러..\n");
-            break;
+            return 0;
         }
         message[nRcv] = '\0';
 
         if (strcmp(message, "exit") == 0) {
             printf("클라이언트가 연결을 종료하였습니다.\n");
-            break;
+            return 0;
         }
 
         printf("%s\n", message);

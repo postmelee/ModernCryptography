@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
     unsigned int Addr;
     char message[BUFSIZE];  
     char nickname[100]; 
+    char opponentNickname[100];
     struct hostent *host;
 	
     printf("서버 주소 : ");     
@@ -60,13 +61,11 @@ int main(int argc, char **argv) {
         fflush(stdin);
         nickname[strcspn(nickname, "\n")] = '\0'; // 개행 문자 제거
         if ((int)strlen(nickname) < NICKNAMEMINLEN || (int)strlen(nickname) > NICKNAMEMAXLEN) {
-            printf("닉네임이 4자 이하입니다. 다시 입력해주세요\n");
+            printf("닉네임이 올바르지 않습니다. 다시 입력해주세요\n");
         }
         else {
-            char message[100];
-            snprintf(message, sizeof(message), "%s님이 대화방에 입장했습니다.", nickname);
-            printf("%s\n", message);
-            send(clntSock, message, (int)strlen(message), 0);
+            printf("%s님이 대화방에 입장했습니다.\n", nickname);
+            send(clntSock, nickname, (int)strlen(nickname), 0);
             break;
         }
     }
@@ -84,7 +83,9 @@ int main(int argc, char **argv) {
             break;
         }
 		
-		printf("%s\n", message);
+		printf("%s님이 대화방에 입장했습니다.\n", message);
+        // 상대방 닉네임 저장
+        strcpy_s(opponentNickname, 100, message);
 
     while(1) {
     

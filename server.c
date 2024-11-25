@@ -27,6 +27,7 @@ int main(int argc, char** argv) {
     char message[BUFSIZE];
     int strLen = 0, fromLen = 0, nRcv = 0, port = 0;
     char nickname[100];
+    char opponentNickname[100];
 
     if (argc != 2) {
         printf("포트 번호를 입력해주세요. : ");
@@ -68,10 +69,8 @@ int main(int argc, char** argv) {
             printf("닉네임이 올바르지 않습니다. 다시 입력해주세요\n");
         }
         else {
-            char message[100];
-            snprintf(message, sizeof(message), "%s님이 대화방에 입장했습니다.", nickname);
-            printf("%s\n", message);
-            send(clntSock, message, (int)strlen(message), 0);
+            printf("%s님이 대화방에 입장했습니다.\n", nickname);
+            send(clntSock, nickname, (int)strlen(nickname), 0);
             break;
         }
     }
@@ -91,7 +90,10 @@ int main(int argc, char** argv) {
             return 0;
         }
 
-        printf("%s\n", message);
+        printf("%s님이 대화방에 입장했습니다.\n", message);
+        // 상대방 닉네임 저장
+        strcpy_s(opponentNickname, 100, message);
+
     while (1) {
 
         // 메세지 수신 대기

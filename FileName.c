@@ -14,6 +14,51 @@ typedef struct {
     int first4Decimal;  // 첫 4비트의 10진수 값
     int second4Decimal; // 둘째 4비트의 10진수 값
 } CharInfo;
+
+// 섞인 테이블
+int mixedTable[10][10] = {
+    {12, 5, 8, 19, 23, 45, 67, 89, 34, 56},
+    {78, 90, 11, 22, 33, 44, 55, 66, 77, 88},
+    {99, 0, 1, 2, 3, 4, 6, 7, 9, 10},
+    {13, 14, 15, 16, 17, 18, 20, 21, 24, 25},
+    {26, 27, 28, 29, 30, 31, 32, 35, 36, 37},
+    {38, 39, 40, 41, 42, 43, 46, 47, 48, 49},
+    {50, 51, 52, 53, 54, 57, 58, 59, 60, 61},
+    {62, 63, 64, 65, 68, 69, 70, 71, 72, 73},
+    {74, 75, 76, 79, 80, 81, 82, 83, 84, 85},
+    {86, 87, 91, 92, 93, 94, 95, 96, 97, 98} };
+
+// 역 테이블
+int reverseTable[100] = { 0 };
+
+// 역 테이블 초기화
+void initializeReverseTable()
+{
+    for (int i = 0; i < 10; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            int value = mixedTable[i][j];
+            reverseTable[value] = i * 10 + j;
+        }
+    }
+}
+
+// 인코딩 함수
+int encodeNumber(int number)
+{
+    int row = number / 10; // 행 번호 (0부터 시작)
+    int col = number % 10; // 열 번호 (0부터 시작)
+    return mixedTable[row][col];
+}
+
+// 디코딩 함수
+int decodeNumber(int encodedNumber)
+{
+    return reverseTable[encodedNumber];
+}
+
+
 // 문자 -> 숫자 변환 함수
 int charToNumeric(char c) {
     if (c >= 'a' && c <= 'z') {
@@ -90,6 +135,24 @@ int getCurrentTime() {
     return local->tm_hour + local->tm_min;
 }
 
+int fourByfourTable(int binaryInput) {
+
+    // 고정된 랜덤 4x4 테이블 정의
+    int table[4][4] = {
+        {3, 7, 11, 2},
+        {14, 6, 9, 1},
+        {12, 0, 5, 8},
+        {10, 13, 4, 15}
+    };
+
+
+    // 입력된 2진수를 행과 열로 변환
+    int row = (binaryInput >> 2) & 0x3; // 첫 2비트
+    int col = binaryInput & 0x3;        // 뒤 2비트
+
+    return table[row][col];
+}
+
 int main() {
     char input[100];
     printf("평문을 입력하세요: ");
@@ -99,7 +162,13 @@ int main() {
     // 현재 시간의 시와 분 합 계산
     int timeSum = getCurrentTime();
     char timeBinary[9];
-    toBinary8Bit(timeSum, timeBinary);
+
+    // 두자리 시간의 앞자리 - 행, 뒷자리- 열로 테이블 조회
+    int crytedTime = mixedTable[timeSum / 10][timeSum % 10];
+
+    // 테이블을 통과한 숫자를 이진수로 변환
+    toBinary8Bit(crytedTime, timeBinary);
+    printf("시간: %d, 테이블 통과한 시간값: %d, 테이블 통과한 시간값 이진수화: %s", timeSum, crytedTime, timeBinary);
 
     printf("현재 시간 (시+분) 합: %d, 8비트 이진수: %s\n", timeSum, timeBinary);
 
@@ -119,22 +188,39 @@ int main() {
         info.character = input[i];
         info.numericValue = numeric;
 
-        // 숫자를 이진수로 변환
+        // 평문의 숫자를 이진수로 변환
         toBinary8Bit(numeric, info.binary);
+
+
 
         // 이진수 XOR 결과 계산
         xorBinaryStrings(info.binary, timeBinary, info.xorResult);
 
+        // 라운드 시작
+        // 
         // XOR 결과를 Shift Row 수행
+
         strcpy_s(info.shifted, 9, info.xorResult);
         shiftRow(info.shifted, 2, 0); // 왼쪽으로 2비트 시프트
 
         // Shift Row 결과를 4비트씩 분리
         splitTo4Bits(info.shifted, info.first4Bits, info.second4Bits);
 
+        // 4x4 테이블 화
+
+        int firstDecimal = binaryToDecimal(info.first4Bits);
+        int CfirstDecimal = fourByfourTable(firstDecimal);
+        int secondDecimal = binaryToDecimal(info.second4Bits);
+        int CsecondDecimal = fourByfourTable(secondDecimal);
+
+        // 버지니아
+        // 
+        //  
         // 4비트를 10진수로 변환
-        info.first4Decimal = binaryToDecimal(info.first4Bits);
-        info.second4Decimal = binaryToDecimal(info.second4Bits);
+        //info.first4Decimal = binaryToDecimal(info.first4Bits);
+        //info.second4Decimal = binaryToDecimal(info.second4Bits);
+        info.first4Decimal = CfirstDecimal;
+        info.second4Decimal = CsecondDecimal;
 
         // 구조체 배열에 저장
         charInfos[charCount++] = info;

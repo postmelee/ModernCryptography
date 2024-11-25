@@ -1,9 +1,18 @@
+#define _CRT_SECURE_NO_WARNINGS
+#pragma comment(lib, "ws2_32.lib")
+
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <winsock2.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
 #define BUFSIZE 1024
-  
+#define NICKNAMEMAXLEN 10
+#define NICKNAMEMINLEN 3
+
+#pragma comment(lib, "ws2_32.lib") // ws2_32.lib ë§í¬
+
 void ErrorHandling(char *message) {
     WSACleanup();
     fputs(message, stderr);
@@ -17,20 +26,21 @@ int main(int argc, char **argv) {
     char sAddr[15];
     int sPort = 0, nRcv = 0;    
     unsigned int Addr;
-    char message[BUFSIZE];   
+    char message[BUFSIZE];  
+    char nickname[100]; 
     struct hostent *host;
 	
-    printf("¼­¹ö ÁÖ¼Ò : ");     
-	scanf("%s", sAddr); 
-    printf("Æ÷Æ® ¹øÈ£ : ");       
-	scanf("%d", &sPort);
-	fflush(stdin);
+    printf("ì„œë²„ ì£¼ì†Œ : ");     
+    scanf("%s", sAddr); 
+    printf("í¬íŠ¸ ë²ˆí˜¸ : ");       
+    scanf("%d", &sPort);
+    fflush(stdin);
       
     WSAStartup(MAKEWORD(2, 2), &wsaData);
           
     clntSock = socket(AF_INET, SOCK_STREAM, 0);
     if(clntSock == INVALID_SOCKET)
-        ErrorHandling("¼ÒÄÏ ¿¡·¯\n");
+        ErrorHandling("ì†Œì¼“ ì—ëŸ¬\n");
           
     memset(&servAddr, 0, sizeof(servAddr));
     servAddr.sin_family = AF_INET;
@@ -38,36 +48,72 @@ int main(int argc, char **argv) {
     servAddr.sin_port = htons(sPort);
   
     if(connect(clntSock, (void *)&servAddr, sizeof(servAddr)) == SOCKET_ERROR)
-        ErrorHandling("¿¬°á ¿¡·¯\n");
-    else printf("¿¬°á ¼º°ø!\nStart...\n");
-  
+        ErrorHandling("ì—°ê²° ì—ëŸ¬\n");
+    else printf("ì—°ê²° ì„±ê³µ!\nStart...\n");
+    
+    // ë‹‰ë„¤ì„ ì…ë ¥
+    while (1) {
+        fflush(stdin);
+        printf("ë‹‰ë„¤ì„ì„ ì…ë ¥í•´ì£¼ì„¸ìš”. (ìµœì†Œ 4ì , ìµœëŒ€ 10ì)\n ë‹‰ë„¤ì„: ");
+        fgets(nickname, NICKNAMEMAXLEN, stdin);
+        fflush(stdin);
+        nickname[strcspn(nickname, "\n")] = '\0'; // ê°œí–‰ ë¬¸ì ì œê±°
+        if ((int)strlen(nickname) < NICKNAMEMINLEN || (int)strlen(nickname) > NICKNAMEMAXLEN) {
+            printf("ë‹‰ë„¤ì„ì´ 4ì ì´í•˜ì…ë‹ˆë‹¤. ë‹¤ì‹œ ì…ë ¥í•´ì£¼ì„¸ìš”\n");
+        }
+        else {
+            char message[100];
+            snprintf(message, sizeof(message), "%së‹˜ì´ ëŒ€í™”ë°©ì— ì…ì¥í–ˆìŠµë‹ˆë‹¤.", nickname);
+            printf("%s\n", message);
+            send(clntSock, message, (int)strlen(message), 0);
+            break;
+        }
+    }
+
     while(1) {
-        printf("\nº¸³¾ ¸Ş½ÃÁö : ");
+        // ìƒëŒ€ë°© ë‹‰ë„¤ì„ ì…ë ¥ ëŒ€ê¸°
+        printf("ìƒëŒ€ë°©ì˜ ëŒ€í™”ë°© ì…ì¥ ê¸°ë‹¤ë¦¬ëŠ” ì¤‘...\n");
+        nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
+        if(nRcv == SOCKET_ERROR) {
+            printf("ìˆ˜ì‹  ì—ëŸ¬..\n");
+            break;
+        }
+        message[nRcv] = '\0';
+          
+        if(strcmp(message, "exit") == 0) {
+            printf("ì„œë²„ê°€ ì—°ê²°ì„ ì¢…ë£Œí•˜ì˜€ìŠµë‹ˆë‹¤.\n");
+            break;
+        }
+		
+		printf("%s\n", message);
+
+        // ë©”ì„¸ì§€ ì „ì†¡
+        printf("\në³´ë‚¼ ë©”ì‹œì§€ : ");
         gets(message);
 		fflush(stdin);
 		
 		send(clntSock, message, (int)strlen(message), 0);
         if(strcmp(message, "exit") == 0) break;
 		
-		printf("¸Ş½ÃÁö ±â´Ù¸®´Â Áß...\n");
+		printf("ë©”ì‹œì§€ ê¸°ë‹¤ë¦¬ëŠ” ì¤‘...\n");
         nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
         if(nRcv == SOCKET_ERROR) {
-            printf("¼ö½Å ¿¡·¯..\n");
+            printf("ìˆ˜ì‹  ì—ëŸ¬..\n");
             break;
         }
         message[nRcv] = '\0';
           
         if(strcmp(message, "exit") == 0) {
-            printf("¼­¹ö°¡ ¿¬°áÀ» Á¾·áÇÏ¿´½À´Ï´Ù.\n");
+            printf("ì„œë²„ê°€ ì—°ê²°ì„ ì¢…ë£Œí•˜ì˜€ìŠµë‹ˆë‹¤.\n");
             break;
         }
 		
-		printf("¹ŞÀº ¸Ş½ÃÁö : %s", message);
+		printf("ë°›ì€ ë©”ì‹œì§€ : %s", message);
 		fflush(stdin);
     }
 	
     closesocket(clntSock);
     WSACleanup();    
-    printf("¿¬°á Á¾·á..\n");
+    printf("ì—°ê²° ì¢…ë£Œ..\n");
     return 0;            
 }

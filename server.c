@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     SOCKADDR_IN servAddr, clntAddr;
     char message[BUFSIZE];
     int strLen = 0, fromLen = 0, nRcv = 0, port = 0;
-    char nickname[NICKNAMEMAXLEN];
+    char nickname[100];
 
     if (argc != 2) {
         printf("포트 번호를 입력해주세요. : ");
@@ -58,11 +58,13 @@ int main(int argc, char** argv) {
     else printf("연결 성공\n");
 
     while (1) {
-        printf("닉네임을 입력해주세요. (최소 4자 , 최대 10자)\n 닉네임: ");
+        fflush(stdin);
+        printf("닉네임을 입력해주세요. (최소 4자 , 최대 10자)\n : ");
         fgets(nickname, NICKNAMEMAXLEN, stdin);
+        fflush(stdin);
         nickname[strcspn(nickname, "\n")] = '\0'; // 개행 문자 제거
-        if ((int)strlen(nickname) < 4) {
-            printf("닉네임이 4자 이하입니다. 다시 입력해주세요\n");
+        if ((int)strlen(nickname) < NICKNAMEMINLEN || (int)strlen(nickname) > NICKNAMEMAXLEN) {
+            printf("닉네임이 올바르지 않습니다. 다시 입력해주세요\n");
         }
         else {
             char message[100];
@@ -74,7 +76,24 @@ int main(int argc, char** argv) {
     }
 
     while (1) {
-        printf("메시지 기다리는 중...\n");
+        // 닉네임 입력 대기
+        printf("상대방의 대화방 입장 기다리는 중...\n");
+        nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
+
+        if (nRcv == SOCKET_ERROR) {
+            printf("수신 에러..\n");
+            break;
+        }
+        message[nRcv] = '\0';
+
+        if (strcmp(message, "exit") == 0) {
+            printf("클라이언트가 연결을 종료하였습니다.\n");
+            break;
+        }
+
+        printf("%s\n", message);
+
+        // 메세지 수신 대기
         nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
 
         if (nRcv == SOCKET_ERROR) {

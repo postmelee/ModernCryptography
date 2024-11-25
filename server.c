@@ -9,7 +9,7 @@ void ErrorHandling(char *message) {
     fputs(message, stderr);
     exit(1);
 }
-  
+
 int main(int argc, char **argv) {
     WSADATA wsaData;
     SOCKET servSock, clntSock;
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     int strLen = 0, fromLen = 0, nRcv = 0, port = 0;
       
     if(argc!=2) {
-        printf("Æ÷Æ® ¹øÈ£¸¦ ÀÔ·ÂÇØÁÖ¼¼¿ä. : ");
+        printf("ï¿½ï¿½Æ® ï¿½ï¿½È£ï¿½ï¿½ ï¿½Ô·ï¿½ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½. : ");
 		scanf("%d", &port);
     }
 	
@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 	
     servSock = socket(PF_INET, SOCK_STREAM, 0);
     if(servSock == INVALID_SOCKET)
-        ErrorHandling("¼ÒÄÏ ¿¡·¯\n");
+        ErrorHandling("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½\n");
 	
     memset(&servAddr, 0, sizeof(SOCKADDR_IN));
     servAddr.sin_family = AF_INET;
@@ -35,36 +35,36 @@ int main(int argc, char **argv) {
     servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
       
     if(bind(servSock, (void *)&servAddr, sizeof(servAddr)) == SOCKET_ERROR)
-        ErrorHandling("¹ÙÀÎµå ¿¡·¯\n");
+        ErrorHandling("ï¿½ï¿½ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½\n");
 	
     if(listen(servSock, 2) == SOCKET_ERROR)
-        ErrorHandling("¸®½º´× ¿¡·¯\n");        
+        ErrorHandling("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½\n");        
 	
     fromLen = sizeof(clntAddr);
       
     clntSock = accept(servSock, (void *)&clntAddr, &fromLen);
     if(clntSock == INVALID_SOCKET)
-        ErrorHandling("¿¬°á ¿¡·¯\n");
-    else printf("%s ¿¬°á ¼º°ø!\nStart ...\n", inet_ntoa(clntAddr.sin_addr));
+        ErrorHandling("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½\n");
+    else printf("%s ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½!\nStart ...\n", inet_ntoa(clntAddr.sin_addr));
 	
     while(1) {
-		printf("¸Þ½ÃÁö ±â´Ù¸®´Â Áß...\n");
+		printf("ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½ ï¿½ï¿½...\n");
         nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
           
         if(nRcv == SOCKET_ERROR) {
-            printf("¼ö½Å ¿¡·¯..\n");
+            printf("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..\n");
             break;
         }
         message[nRcv] = '\0';
           
         if(strcmp(message, "exit") == 0) {
-            printf("Å¬¶óÀÌ¾ðÆ®°¡ ¿¬°áÀ» Á¾·áÇÏ¿´½À´Ï´Ù.\n");
+            printf("Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.\n");
             break;
         }
           
-        printf("¹ÞÀº ¸Þ½ÃÁö : %s", message);
+        printf("ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ : %s", message);
 		fflush(stdin);
-        printf("\nº¸³¾ ¸Þ½ÃÁö : ");
+        printf("\nï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ : ");
         gets(message);
 		fflush(stdin);
         send(clntSock, message, (int)strlen(message), 0); 
@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
 	
     closesocket(clntSock);
     WSACleanup();
-    printf("¿¬°á Á¾·á..\n");
+    printf("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..\n");
     return 0;    
 }
+

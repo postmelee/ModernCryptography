@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
     SOCKADDR_IN servAddr, clntAddr;
     char message[BUFSIZE];
     int strLen = 0, fromLen = 0, nRcv = 0, port = 0;
+    char nickname[NICKNAMEMAXLEN];
       
     if(argc!=2) {
         printf("포트 번호를 입력해주세요. : ");
@@ -48,6 +49,22 @@ int main(int argc, char **argv) {
     if(clntSock == INVALID_SOCKET)
         ErrorHandling("연결 에러\n");
     else printf("%s 연결 성공!\nStart ...\n", inet_ntoa(clntAddr.sin_addr));
+
+    while(1) {
+        printf("닉네임을 입력해주세요. (최소 4자 , 최대 10자)\n 닉네임: ");
+        gets(nickname);
+		fflush(stdin);
+        if ((int)strlen(nickname) < 4) {
+            printf("닉네임이 4자 이하입니다. 다시 입력해주세요\n");
+        } else {
+            char message[100];
+            strcpy(message, nickname);
+            strcat(message, "님이 대화방에 입장했습니다.")
+            printf(message);
+            send(clntSock, message, (int)strlen(message), 0); 
+            break;
+        }
+    }
 	
     while(1) {
 		printf("메시지 기다리는 중...\n");

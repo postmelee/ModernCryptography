@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
     while (1) {
         fflush(stdin);
         printf("닉네임을 입력해주세요. (최소 4자 , 최대 10자)\n 닉네임: ");
+        fflush(stdin);
         fgets(nickname, NICKNAMEMAXLEN, stdin);
         fflush(stdin);
         nickname[strcspn(nickname, "\n")] = '\0'; // 개행 문자 제거

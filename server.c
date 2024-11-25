@@ -7,7 +7,7 @@
 void ErrorHandling(char *message) {
     WSACleanup();
     fputs(message, stderr);
-    exit(1);
+    exit(1);  
 }
 
 int main(int argc, char **argv) {

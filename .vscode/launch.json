@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/ricky/Desktop/KNU/3-2/현대암호학/기말과제/ModernCryptography",
+      "program": "/Users/ricky/Desktop/KNU/3-2/현대암호학/기말과제/ModernCryptography/build/Debug/outDebug"
+    }
+  ]
+}

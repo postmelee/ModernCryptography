@@ -3,6 +3,8 @@
 #include <string.h>
 #include <winsock2.h>
 #define BUFSIZE 1024
+#define NICKNAMEMAXLEN 10
+#define NICKNAMEMINLEN 3
   
 void ErrorHandling(char *message) {
     WSACleanup();
@@ -18,7 +20,7 @@ int main(int argc, char **argv) {
     int strLen = 0, fromLen = 0, nRcv = 0, port = 0;
       
     if(argc!=2) {
-        printf("��Ʈ ��ȣ�� �Է����ּ���. : ");
+        printf("포트 번호를 입력해주세요. : ");
 		scanf("%d", &port);
     }
 	
@@ -26,7 +28,7 @@ int main(int argc, char **argv) {
 	
     servSock = socket(PF_INET, SOCK_STREAM, 0);
     if(servSock == INVALID_SOCKET)
-        ErrorHandling("���� ����\n");
+        ErrorHandling("소켓 에러\n");
 	
     memset(&servAddr, 0, sizeof(SOCKADDR_IN));
     servAddr.sin_family = AF_INET;
@@ -35,36 +37,36 @@ int main(int argc, char **argv) {
     servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
       
     if(bind(servSock, (void *)&servAddr, sizeof(servAddr)) == SOCKET_ERROR)
-        ErrorHandling("���ε� ����\n");
+        ErrorHandling("바인드 에러\n");
 	
     if(listen(servSock, 2) == SOCKET_ERROR)
-        ErrorHandling("������ ����\n");        
+        ErrorHandling("리스닝 에러\n");        
 	
     fromLen = sizeof(clntAddr);
       
     clntSock = accept(servSock, (void *)&clntAddr, &fromLen);
     if(clntSock == INVALID_SOCKET)
-        ErrorHandling("���� ����\n");
-    else printf("%s ���� ����!\nStart ...\n", inet_ntoa(clntAddr.sin_addr));
+        ErrorHandling("연결 에러\n");
+    else printf("%s 연결 성공!\nStart ...\n", inet_ntoa(clntAddr.sin_addr));
 	
     while(1) {
-		printf("�޽��� ��ٸ��� ��...\n");
+		printf("메시지 기다리는 중...\n");
         nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
           
         if(nRcv == SOCKET_ERROR) {
-            printf("���� ����..\n");
+            printf("수신 에러..\n");
             break;
         }
         message[nRcv] = '\0';
           
         if(strcmp(message, "exit") == 0) {
-            printf("Ŭ���̾�Ʈ�� ������ �����Ͽ����ϴ�.\n");
+            printf("클라이언트가 연결을 종료하였습니다.\n");
             break;
         }
           
-        printf("���� �޽��� : %s", message);
+        printf("받은 메시지 : %s", message);
 		fflush(stdin);
-        printf("\n���� �޽��� : ");
+        printf("\n보낼 메시지 : ");
         gets(message);
 		fflush(stdin);
         send(clntSock, message, (int)strlen(message), 0); 
@@ -73,7 +75,7 @@ int main(int argc, char **argv) {
 	
     closesocket(clntSock);
     WSACleanup();
-    printf("���� ����..\n");
+    printf("연결 종료..\n");
     return 0;    
 }
 

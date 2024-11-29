@@ -179,6 +179,17 @@ void nicknameToNumeric(const char* nickname, int result[]) {
 // 인코딩 함수
 void encodeMessage(const char* nickname, const char* plaintext, char* encryptedText) {
 
+    int nicknameNumeric[100];
+    int nicknameLength = strlen(nickname);
+    for (int i = 0; i < nicknameLength; i++) {
+        int numeric = charToNumeric(nickname[i]);
+        if (numeric == -1) {
+            printf("닉네임의 문자 '%c'는 변환할 수 없습니다.\n", nickname[i]);
+            encryptedText[0] = '\0';  // 에러 처리
+            return;
+        }
+        nicknameNumeric[i] = numeric;
+    }
     // 현재 시간의 시와 분 합 계산
     int timeSum = getCurrentTime();
     char timeBinary[9];
@@ -216,44 +227,40 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
         // Round 시작
 
         int roundNum = 3;
-        int nicknameIndex = 0; // 닉네임 인덱스 초기화
+
+
 
         for(int round=0; round<roundNum; round++) {
-        // Shift Row 수행
-        strcpy(info.shifted, result);
-        shiftRow(info.shifted, 2, 0); // 왼쪽으로 2비트 시프트
+            int nicknameIndex = 0; // 닉네임 인덱스 초기화
+            // Shift Row 수행
+            strcpy(info.shifted, result);
+            shiftRow(info.shifted, 2, 0); // 왼쪽으로 2비트 시프트
+            // Shift Row 결과를 4비트씩 분리
+            splitTo4Bits(info.shifted, info.first4Bits, info.second4Bits);
 
-        // Shift Row 결과를 4비트씩 분리
-        splitTo4Bits(info.shifted, info.first4Bits, info.second4Bits);
+            // 4비트 -> 10진수 변환
+            int firstDecimal = binaryToDecimal(info.first4Bits);
+            int secondDecimal = binaryToDecimal(info.second4Bits);
 
-        // 4비트 -> 10진수 변환
-        int firstDecimal = binaryToDecimal(info.first4Bits);
-        int secondDecimal = binaryToDecimal(info.second4Bits);
+            // 4x4 테이블 적용, 
+            info.first4Decimal = fourByfourTable(firstDecimal);
+            info.second4Decimal = fourByfourTable(secondDecimal);
 
-        // 4x4 테이블 적용, 
-        info.first4Decimal = fourByfourTable(firstDecimal);
-        info.second4Decimal = fourByfourTable(secondDecimal);
+                // 버지니아 
 
-            // 버지니아 
+            // 닉네임 숫자와 합산 후 mod 26 (버지니아)
+            int nicknameLength = strlen(nickname);
+            info.sum1 = (info.first4Decimal + nicknameNumeric[nicknameIndex % nicknameLength]) % 16;
+            nicknameIndex++;
+            info.sum2 = (info.second4Decimal + nicknameNumeric[nicknameIndex % nicknameLength]) % 16;
+            nicknameIndex++;
+            // 위 결과를 2진수 4비트화
+            char first4Bits[5]; char second4Bits[5];
+            toBinary4Bit(info.sum1, first4Bits);
+            toBinary4Bit(info.sum2, second4Bits);
+            join4BitsTo8Bit(result, first4Bits, second4Bits);
 
-        // 닉네임의 각 문자를 숫자로 변환
-        int nicknameNumeric[100];
-        nicknameToNumeric(nickname, nicknameNumeric);
-
-        // 닉네임 숫자와 합산 후 mod 26 (버지니아)
-        int nicknameLength = strlen(nickname);
-        info.sum1 = (info.first4Decimal + nicknameNumeric[nicknameIndex % nicknameLength]) % 16;
-        nicknameIndex++;
-        info.sum2 = (info.second4Decimal + nicknameNumeric[nicknameIndex % nicknameLength]) % 16;
-        nicknameIndex++;
-
-        // 위 결과를 2진수 4비트화
-        char first4Bits[5]; char second4Bits[5];
-        toBinary4Bit(info.sum1, first4Bits);
-        toBinary4Bit(info.sum2, second4Bits);
-        join4BitsTo8Bit(result, first4Bits, second4Bits);
-
-        // printf("Round %d: %s\n", round, result);
+            // printf("Round %d: %s\n", round, result);
         }
         // 전송
         // sum1과 sum2를 알파벳으로 변환
@@ -305,12 +312,11 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
     // 암호문의 각 문자 쌍 처리
     for (int i = 0; i < strlen(encryptedText); i+=2) {
         int roundNum = 3;
-        int nicknameIndex = 0; // 닉네임 인덱스 초기화
+
 
         int sum1 = charToNumeric(encryptedText[i]);
         int sum2 = charToNumeric(encryptedText[i+1]);
 
-        printf("sum1: %d, sum2: %d\n", sum1, sum2);
         char firstSum4Bits[5]; char secondSumBits[5];
         toBinary4Bit(sum1, firstSum4Bits);
         toBinary4Bit(sum2, secondSumBits);
@@ -320,54 +326,40 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
 
         // Round start
         for (int round = 0; round<roundNum; round++) {
+            int nicknameIndex = 0; // 닉네임 인덱스 초기화
             // 문자를 10진수로 변환, 찢기
             char roundFirst4Bits[5]; char roundSecond4Bits[5];
             splitTo4Bits(roundResult, roundFirst4Bits, roundSecond4Bits);
             int sum1 = binaryToDecimal(roundFirst4Bits);
             int sum2 = binaryToDecimal(roundSecond4Bits);
 
-        // // 10진수를 8비트화
-        //  char splitedFirst4Bits[5]; char splitedSecond4Bits[5];
-        // toBinary4Bit(sum1, splitedFirst4Bits);
-        // toBinary4Bit(sum2, splitedSecond4Bits);
+            // 닉네임 숫자와의 역연산 (버지니아)
+            int CfirstDecimal = (sum1 - nicknameNumeric[nicknameIndex % nicknameLength] + 32) % 16;
+            nicknameIndex++;
+            int CsecondDecimal = (sum2 - nicknameNumeric[nicknameIndex % nicknameLength] + 32) % 16;
+            nicknameIndex++;
 
-        // // split한 4비트 두개를 10진수화 (버지니아 하기 위해서)
-        // int splitedFirstDecimal = binaryToDecimal(splitedFirst4Bits);
-        // int splitedSecondDecimal = binaryToDecimal(splitedSecond4Bits);
+            // 4x4 테이블의 역변환
+            int firstDecimal = reverseFourByfourTable(CfirstDecimal);
+            int secondDecimal = reverseFourByfourTable(CsecondDecimal);
 
-        // if (sum1 == -1 || sum2 == -1) {
-        //     printf("암호문의 문자 '%c' 또는 '%c'는 변환할 수 없습니다.\n", encryptedText[i], encryptedText[i + 1]);
-        //     continue;
-        // }
+            if (firstDecimal == -1 || secondDecimal == -1) {
+                printf("4x4 테이블에서 역변환할 수 없습니다.\n");
+                continue;
+            }
 
-        // 닉네임 숫자와의 역연산 (버지니아)
-        int CfirstDecimal = (sum1 - nicknameNumeric[nicknameIndex % nicknameLength] + 32) % 16;
-        nicknameIndex++;
-        int CsecondDecimal = (sum2 - nicknameNumeric[nicknameIndex % nicknameLength] + 32) % 16;
-        nicknameIndex++;
+            // 4비트 이진수로 변환
+            char first4Bits[5], second4Bits[5];
+            toBinary4Bit(firstDecimal, first4Bits);
+            toBinary4Bit(secondDecimal, second4Bits);
+            
+            // 이진수 결합
+            char shifted[9];
+            join4BitsTo8Bit(shifted, first4Bits, second4Bits);
 
-        // 4x4 테이블의 역변환
-        int firstDecimal = reverseFourByfourTable(CfirstDecimal);
-        int secondDecimal = reverseFourByfourTable(CsecondDecimal);
-
-        if (firstDecimal == -1 || secondDecimal == -1) {
-            printf("4x4 테이블에서 역변환할 수 없습니다.\n");
-            continue;
-        }
-
-        // 4비트 이진수로 변환
-        char first4Bits[5], second4Bits[5];
-        toBinary4Bit(firstDecimal, first4Bits);
-        toBinary4Bit(secondDecimal, second4Bits);
-
-        // 이진수 결합
-        char shifted[9];
-        join4BitsTo8Bit(shifted, first4Bits, second4Bits);
-
-        // 순환 시프트 복원 (오른쪽으로 2비트)
-        strcpy(roundResult, shifted);
-        shiftRow(roundResult, 2, 1); // 오른쪽으로 2비트 시프트
-
+            // 순환 시프트 복원 (오른쪽으로 2비트)
+            strcpy(roundResult, shifted);
+            shiftRow(roundResult, 2, 1); // 오른쪽으로 2비트 시프트
         }
 
         // XOR 연산 복원
@@ -376,7 +368,7 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
 
         // 이진수를 10진수로 변환
         int numericValue = binaryToDecimal(binary);
-        printf("binary: %s, numericValue: %d", binary, numericValue);
+        
         // 숫자를 문자로 변환
         char character = numericValue + 'a'; // 대문자로 변환
 

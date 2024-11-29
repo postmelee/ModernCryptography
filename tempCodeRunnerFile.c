@@ -169,7 +169,7 @@ void nicknameToNumeric(const char* nickname, int result[]) {
         int numeric = charToNumeric(nickname[i]);
         if (numeric == -1) {
             printf("닉네임의 문자 '%c'는 변환할 수 없습니다.\n", nickname[i]);
-            return;
+            exit(1);
         }
         result[i] = numeric;
     }
@@ -215,8 +215,7 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
         // Round 시작
 
         int roundNum = 3;
-
-        for(int round=0; round<roundNum; round++) {
+        for(int round=0; round<roundNum; i++) {
         // Shift Row 수행
         strcpy(info.shifted, result);
         shiftRow(info.shifted, 2, 0); // 왼쪽으로 2비트 시프트

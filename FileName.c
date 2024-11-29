@@ -2,74 +2,74 @@
 #include <string.h>
 #include <time.h>
 
-// ¹®ÀÚ Á¤º¸¸¦ ÀúÀåÇÏ´Â ±¸Á¶Ã¼ Á¤ÀÇ
+// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½
 typedef struct {
-    char character;     // ¹®ÀÚ
-    int numericValue;   // ¼ýÀÚ °ª
-    char binary[9];     // 8ºñÆ® ÀÌÁø¼ö ¹®ÀÚ¿­
-    char xorResult[9];  // XOR °á°ú ÀÌÁø¼ö ¹®ÀÚ¿­
-    char shifted[9];    // Shift Row °á°ú
-    char first4Bits[5]; // Ã¹ 4ºñÆ®
-    char second4Bits[5];// µÑÂ° 4ºñÆ®
-    int first4Decimal;  // Ã¹ 4ºñÆ®ÀÇ 10Áø¼ö °ª
-    int second4Decimal; // µÑÂ° 4ºñÆ®ÀÇ 10Áø¼ö °ª
+    char character;     // ï¿½ï¿½ï¿½ï¿½
+    int numericValue;   // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+    char binary[9];     // 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½
+    char xorResult[9];  // XOR ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½
+    char shifted[9];    // Shift Row ï¿½ï¿½ï¿½
+    char first4Bits[5]; // Ã¹ 4ï¿½ï¿½Æ®
+    char second4Bits[5];// ï¿½ï¿½Â° 4ï¿½ï¿½Æ®
+    int first4Decimal;  // Ã¹ 4ï¿½ï¿½Æ®ï¿½ï¿½ 10ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+    int second4Decimal; // ï¿½ï¿½Â° 4ï¿½ï¿½Æ®ï¿½ï¿½ 10ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 } CharInfo;
-// ¹®ÀÚ -> ¼ýÀÚ º¯È¯ ÇÔ¼ö
+// ï¿½ï¿½ï¿½ï¿½ -> ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ ï¿½Ô¼ï¿½
 int charToNumeric(char c) {
     if (c >= 'a' && c <= 'z') {
-        return c - 'a' + 0; // 'a'´Â 0ºÎÅÍ ½ÃÀÛ
+        return c - 'a' + 0; // 'a'ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     }
     else if (c >= 'A' && c <= 'Z') {
-        return c - 'A' + 0; // 'A'´Â 0ºÎÅÍ ½ÃÀÛ
+        return c - 'A' + 0; // 'A'ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     }
     else {
-        return -1; // À¯È¿ÇÏÁö ¾ÊÀº ¹®ÀÚ Ã³¸®
+        return -1; // ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
     }
 }
 
-// Á¤¼ö¸¦ 8ºñÆ® ÀÌÁø¼ö ¹®ÀÚ¿­·Î º¯È¯ÇÏ´Â ÇÔ¼ö
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½
 void toBinary8Bit(int num, char* binary) {
     for (int i = 7; i >= 0; i--) {
-        binary[i] = (num % 2) + '0'; // ³ª¸ÓÁö¸¦ ÀÌ¿ëÇÏ¿© ÀÌÁø¼ö °è»ê
+        binary[i] = (num % 2) + '0'; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
         num /= 2;
     }
-    binary[8] = '\0'; // ¹®ÀÚ¿­ ³¡¿¡ NULL Ãß°¡
+    binary[8] = '\0'; // ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ NULL ï¿½ß°ï¿½
 }
 
-// µÎ °³ÀÇ 8ºñÆ® ÀÌÁø¼ö ¹®ÀÚ¿­À» XOR ¿¬»êÇÏ´Â ÇÔ¼ö
+// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½ XOR ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½
 void xorBinaryStrings(char* binary1, char* binary2, char* result) {
     for (int i = 0; i < 8; i++) {
-        // °¢ ºñÆ®¸¦ Á¤¼ö·Î º¯È¯ÇÏ¿© XOR ¿¬»ê ÈÄ, ´Ù½Ã ¹®ÀÚ·Î º¯È¯
+        // ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï¿ï¿½ XOR ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½Ú·ï¿½ ï¿½ï¿½È¯
         result[i] = ((binary1[i] - '0') ^ (binary2[i] - '0')) + '0';
     }
-    result[8] = '\0'; // ¹®ÀÚ¿­ ³¡¿¡ NULL Ãß°¡
+    result[8] = '\0'; // ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ NULL ï¿½ß°ï¿½
 }
 
-// 8ºñÆ® ÀÌÁø¼ö¸¦ ¼øÈ¯ ½ÃÇÁÆ®ÇÏ´Â ÇÔ¼ö
+// 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½
 void shiftRow(char* binary, int shiftAmount, int direction) {
-    char temp[9]; // ÀÓ½Ã ÀúÀå ¹è¿­
-    int len = 8;  // 8ºñÆ® ±æÀÌ °íÁ¤
+    char temp[9]; // ï¿½Ó½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½è¿­
+    int len = 8;  // 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-    if (direction == 0) { // ¿ÞÂÊ ¼øÈ¯ ½ÃÇÁÆ®
+    if (direction == 0) { // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ ï¿½ï¿½ï¿½ï¿½Æ®
         for (int i = 0; i < len; i++) {
             temp[i] = binary[(i + shiftAmount) % len];
         }
     }
-    else if (direction == 1) { // ¿À¸¥ÂÊ ¼øÈ¯ ½ÃÇÁÆ®
+    else if (direction == 1) { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ ï¿½ï¿½ï¿½ï¿½Æ®
         for (int i = 0; i < len; i++) {
             temp[i] = binary[(i - shiftAmount + len) % len];
         }
     }
 
-    temp[len] = '\0'; // NULL ¹®ÀÚ Ãß°¡
-    strcpy_s(binary, 9, temp); // ¾ÈÀüÇÑ ¹®ÀÚ¿­ º¹»ç
+    temp[len] = '\0'; // NULL ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+    strcpy_s(binary, 9, temp); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½
 }
 
-// 8ºñÆ® ÀÌÁø¼ö¸¦ 4ºñÆ®¾¿ ³ª´©´Â ÇÔ¼ö
-// 8ºñÆ® ÀÌÁø¼ö¸¦ 4ºñÆ®¾¿ ³ª´©´Â ÇÔ¼ö
+// 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 4ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
+// 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 4ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 void splitTo4Bits(char* binary, char* first4, char* second4) {
-    strncpy_s(first4, 5, binary, 4);  // Ã¹ 4ºñÆ® º¹»ç (5´Â ¹è¿­ Å©±â)
-    strncpy_s(second4, 5, binary + 4, 4); // ´ÙÀ½ 4ºñÆ® º¹»ç (5´Â ¹è¿­ Å©±â)
+    strncpy_s(first4, 5, binary, 4);  // Ã¹ 4ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (5ï¿½ï¿½ ï¿½è¿­ Å©ï¿½ï¿½)
+    strncpy_s(second4, 5, binary + 4, 4); // ï¿½ï¿½ï¿½ï¿½ 4ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (5ï¿½ï¿½ ï¿½è¿­ Å©ï¿½ï¿½)
 }
 
 int binaryToDecimal(char* binary) {
@@ -83,7 +83,7 @@ int binaryToDecimal(char* binary) {
 
 
 
-// ÇöÀç ½Ã°£À» °¡Á®¿Í ½Ã¿Í ºÐÀÇ ÇÕÀ» ¹ÝÈ¯ÇÏ´Â ÇÔ¼ö
+// ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½
 int getCurrentTime() {
     time_t now = time(NULL);
     struct tm* local = localtime(&now);
@@ -92,26 +92,26 @@ int getCurrentTime() {
 
 int main() {
     char input[100];
-    printf("Æò¹®À» ÀÔ·ÂÇÏ¼¼¿ä: ");
+    printf("ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½: ");
     fgets(input, sizeof(input), stdin);
-    input[strcspn(input, "\n")] = '\0'; // °³Çà ¹®ÀÚ Á¦°Å
+    input[strcspn(input, "\n")] = '\0'; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-    // ÇöÀç ½Ã°£ÀÇ ½Ã¿Í ºÐ ÇÕ °è»ê
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½Ã¿ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½
     int timeSum = getCurrentTime();
     char timeBinary[9];
     toBinary8Bit(timeSum, timeBinary);
 
-    printf("ÇöÀç ½Ã°£ (½Ã+ºÐ) ÇÕ: %d, 8ºñÆ® ÀÌÁø¼ö: %s\n", timeSum, timeBinary);
+    printf("ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ (ï¿½ï¿½+ï¿½ï¿½) ï¿½ï¿½: %d, 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: %s\n", timeSum, timeBinary);
 
-    // ÀÔ·Â¹ÞÀº ¹®ÀÚµéÀ» ÀúÀåÇÒ ±¸Á¶Ã¼ ¹è¿­
+    // ï¿½Ô·Â¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼ ï¿½è¿­
     CharInfo charInfos[100];
     int charCount = 0;
 
-    // Æò¹®ÀÇ °¢ ¹®ÀÚ Ã³¸®
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
     for (int i = 0; i < strlen(input); i++) {
         int numeric = charToNumeric(input[i]);
         if (numeric == -1) {
-            printf("¹®ÀÚ '%c'´Â º¯È¯ÇÒ ¼ö ¾ø½À´Ï´Ù.\n", input[i]);
+            printf("ï¿½ï¿½ï¿½ï¿½ '%c'ï¿½ï¿½ ï¿½ï¿½È¯ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.\n", input[i]);
             continue;
         }
 
@@ -119,30 +119,30 @@ int main() {
         info.character = input[i];
         info.numericValue = numeric;
 
-        // ¼ýÀÚ¸¦ ÀÌÁø¼ö·Î º¯È¯
+        // ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
         toBinary8Bit(numeric, info.binary);
 
-        // ÀÌÁø¼ö XOR °á°ú °è»ê
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ XOR ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
         xorBinaryStrings(info.binary, timeBinary, info.xorResult);
 
-        // XOR °á°ú¸¦ Shift Row ¼öÇà
+        // XOR ï¿½ï¿½ï¿½ï¿½ï¿½ Shift Row ï¿½ï¿½ï¿½ï¿½
         strcpy_s(info.shifted, 9, info.xorResult);
-        shiftRow(info.shifted, 2, 0); // ¿ÞÂÊÀ¸·Î 2ºñÆ® ½ÃÇÁÆ®
+        shiftRow(info.shifted, 2, 0); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½Æ®
 
-        // Shift Row °á°ú¸¦ 4ºñÆ®¾¿ ºÐ¸®
+        // Shift Row ï¿½ï¿½ï¿½ï¿½ï¿½ 4ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ð¸ï¿½
         splitTo4Bits(info.shifted, info.first4Bits, info.second4Bits);
 
-        // 4ºñÆ®¸¦ 10Áø¼ö·Î º¯È¯
+        // 4ï¿½ï¿½Æ®ï¿½ï¿½ 10ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
         info.first4Decimal = binaryToDecimal(info.first4Bits);
         info.second4Decimal = binaryToDecimal(info.second4Bits);
 
-        // ±¸Á¶Ã¼ ¹è¿­¿¡ ÀúÀå
+        // ï¿½ï¿½ï¿½ï¿½Ã¼ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         charInfos[charCount++] = info;
     }
 
-    // °á°ú Ãâ·Â
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     for (int i = 0; i < charCount; i++) {
-        printf("¹®ÀÚ: %c, ¼ýÀÚ: %d, 8ºñÆ® ÀÌÁø¼ö: %s, XOR °á°ú: %s, Shift Row °á°ú: %s, Ã¹ 4ºñÆ®: %s (%d), µÑÂ° 4ºñÆ®: %s (%d)\n",
+        printf("ï¿½ï¿½ï¿½ï¿½: %c, ï¿½ï¿½ï¿½ï¿½: %d, 8ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: %s, XOR ï¿½ï¿½ï¿½: %s, Shift Row ï¿½ï¿½ï¿½: %s, Ã¹ 4ï¿½ï¿½Æ®: %s (%d), ï¿½ï¿½Â° 4ï¿½ï¿½Æ®: %s (%d)\n",
             charInfos[i].character,
             charInfos[i].numericValue,
             charInfos[i].binary,

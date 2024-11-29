@@ -247,6 +247,8 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
 
         // 위 결과를 2진수 4비트화
         char first4Bits[5]; char second4Bits[5];
+        toBinary4Bit(info.sum1, first4Bits);
+        toBinary4Bit(info.sum2, second4Bits);
         join4BitsTo8Bit(result, first4Bits, second4Bits);
 
         printf("Round %d: %s\n", round, result);

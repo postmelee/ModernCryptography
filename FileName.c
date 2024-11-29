@@ -17,7 +17,9 @@ typedef struct {
     int second4Decimal; // 둘째 4비트의 10진수 값
     int sum1;           // 첫 합 (first4Decimal + 닉네임 숫자) mod 26
     int sum2;           // 둘째 합 (second4Decimal + 닉네임 숫자) mod 26
-    char letter;       // 알파벳으로 변환한 결과
+    char letter1;       // 알파벳으로 변환한 결과
+    char letter2;       // 알파벳으로 변환한 결과
+    char* result; // 비트화된 결과
 } CharInfo;
 
 // 섞인 테이블
@@ -190,7 +192,6 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
     // 입력받은 문자들을 저장할 구조체 배열
     CharInfo charInfos[100];
     int charCount = 0;
-    int nicknameIndex = 0; // 닉네임 인덱스 초기화
 
     // 평문의 각 문자 처리
     for (int i = 0; i < strlen(plaintext); i++) {
@@ -215,6 +216,7 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
         // Round 시작
 
         int roundNum = 3;
+        int nicknameIndex = 0; // 닉네임 인덱스 초기화
 
         for(int round=0; round<roundNum; round++) {
         // Shift Row 수행
@@ -251,12 +253,17 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
         toBinary4Bit(info.sum2, second4Bits);
         join4BitsTo8Bit(result, first4Bits, second4Bits);
 
-        printf("Round %d: %s\n", round, result);
+        // printf("Round %d: %s\n", round, result);
         }
         // 전송
         // sum1과 sum2를 알파벳으로 변환
-        info.letter = binaryToDecimal(result) + 'A'; // 대문자로 변환
+        char firstResult4Bits[5]; char secondResult4Bits[5];
 
+        splitTo4Bits(result, firstResult4Bits, secondResult4Bits);
+
+        info.letter1 = binaryToDecimal(firstResult4Bits) + 'A'; // 대문자로 변환
+        info.letter2 = binaryToDecimal(secondResult4Bits) + 'A'; 
+        info.result = result;
         // 구조체 배열에 저장
         charInfos[charCount++] = info;
     }
@@ -265,8 +272,9 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
     encryptedText[0] = '\0'; // 초기화
     for (int i = 0; i < charCount; i++) {
         int len = strlen(encryptedText);
-        encryptedText[len] = charInfos[i].letter;
-        encryptedText[len + 1] = '\0';
+        encryptedText[len] = charInfos[i].letter1;
+        encryptedText[len + 1] = charInfos[i].letter2;
+        encryptedText[len + 2] = '\0';
     }
 
     printf("사용된 시간 합: %d\n", timeSum); // 디버깅을 위해 시간 합 출력
@@ -292,24 +300,50 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
     int crytedTime = mixedTable[(timeSum / 10) % 10][timeSum % 10];
     toBinary8Bit(crytedTime, timeBinary);
 
-    int nicknameIndex = 0; // 닉네임 인덱스 초기화
     int decryptedIndex = 0;
 
     // 암호문의 각 문자 쌍 처리
-    for (int i = 0; i < strlen(encryptedText); i += 2) {
-        // sum1과 sum2 복원
+    for (int i = 0; i < strlen(encryptedText); i+=2) {
+        int roundNum = 3;
+        int nicknameIndex = 0; // 닉네임 인덱스 초기화
+
         int sum1 = charToNumeric(encryptedText[i]);
-        int sum2 = charToNumeric(encryptedText[i + 1]);
+        int sum2 = charToNumeric(encryptedText[i+1]);
 
-        if (sum1 == -1 || sum2 == -1) {
-            printf("암호문의 문자 '%c' 또는 '%c'는 변환할 수 없습니다.\n", encryptedText[i], encryptedText[i + 1]);
-            continue;
-        }
+        printf("sum1: %d, sum2: %d\n", sum1, sum2);
+        char firstSum4Bits[5]; char secondSumBits[5];
+        toBinary4Bit(sum1, firstSum4Bits);
+        toBinary4Bit(sum2, secondSumBits);
 
-        // 닉네임 숫자와의 역연산
-        int CfirstDecimal = (sum1 - nicknameNumeric[nicknameIndex % nicknameLength] + 26) % 26;
+        char roundResult[9];
+        join4BitsTo8Bit(roundResult, firstSum4Bits, secondSumBits);
+
+        // Round start
+        for (int round = 0; round<roundNum; round++) {
+            // 문자를 10진수로 변환, 찢기
+            char roundFirst4Bits[5]; char roundSecond4Bits[5];
+            splitTo4Bits(roundResult, roundFirst4Bits, roundSecond4Bits);
+            int sum1 = binaryToDecimal(roundFirst4Bits);
+            int sum2 = binaryToDecimal(roundSecond4Bits);
+
+        // // 10진수를 8비트화
+        //  char splitedFirst4Bits[5]; char splitedSecond4Bits[5];
+        // toBinary4Bit(sum1, splitedFirst4Bits);
+        // toBinary4Bit(sum2, splitedSecond4Bits);
+
+        // // split한 4비트 두개를 10진수화 (버지니아 하기 위해서)
+        // int splitedFirstDecimal = binaryToDecimal(splitedFirst4Bits);
+        // int splitedSecondDecimal = binaryToDecimal(splitedSecond4Bits);
+
+        // if (sum1 == -1 || sum2 == -1) {
+        //     printf("암호문의 문자 '%c' 또는 '%c'는 변환할 수 없습니다.\n", encryptedText[i], encryptedText[i + 1]);
+        //     continue;
+        // }
+
+        // 닉네임 숫자와의 역연산 (버지니아)
+        int CfirstDecimal = (sum1 - nicknameNumeric[nicknameIndex % nicknameLength] + 32) % 16;
         nicknameIndex++;
-        int CsecondDecimal = (sum2 - nicknameNumeric[nicknameIndex % nicknameLength] + 26) % 26;
+        int CsecondDecimal = (sum2 - nicknameNumeric[nicknameIndex % nicknameLength] + 32) % 16;
         nicknameIndex++;
 
         // 4x4 테이블의 역변환
@@ -331,17 +365,18 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
         join4BitsTo8Bit(shifted, first4Bits, second4Bits);
 
         // 순환 시프트 복원 (오른쪽으로 2비트)
-        char xorResult[9];
-        strcpy(xorResult, shifted);
-        shiftRow(xorResult, 2, 1); // 오른쪽으로 2비트 시프트
+        strcpy(roundResult, shifted);
+        shiftRow(roundResult, 2, 1); // 오른쪽으로 2비트 시프트
+
+        }
 
         // XOR 연산 복원
         char binary[9];
-        xorBinaryStrings(xorResult, timeBinary, binary);
+        xorBinaryStrings(roundResult, timeBinary, binary);
 
         // 이진수를 10진수로 변환
         int numericValue = binaryToDecimal(binary);
-
+        printf("binary: %s, numericValue: %d", binary, numericValue);
         // 숫자를 문자로 변환
         char character = numericValue + 'a'; // 대문자로 변환
 
@@ -387,8 +422,8 @@ int main() {
     encryptTransmissionTime(transmissionTime, serverTime, encryptedTransmissionTime);
 
     // 암호화된 전송 시간 추가
-    strcat(encryptedText, "|"); // 구분자 추가
-    strcat(encryptedText, encryptedTransmissionTime);
+    // strcat(encryptedText, "|"); // 구분자 추가
+    // strcat(encryptedText, encryptedTransmissionTime);
 
     printf("암호화된 결과: %s\n", encryptedText);
 
@@ -399,8 +434,8 @@ int main() {
     scanf("%d", &timeSum);
 
      // 암호문과 전송 시간 분리
-    char* encryptedMessage = strtok(encryptedText, "|");
-    char* encryptedTime = strtok(NULL, "|");
+    // char* encryptedMessage = strtok(encryptedText, "|");
+    // char* encryptedTime = strtok(NULL, "|");
 
 
     decodeMessage(nickname, encryptedText, decryptedText, timeSum);

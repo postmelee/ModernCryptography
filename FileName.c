@@ -4,24 +4,24 @@
 #include <string.h>
 #include <time.h>
 
-// ���� ������ �����ϴ� ����ü ����
+// 문자 정보를 저장하는 구조체 정의
 typedef struct {
-    char character;     // ����
-    int numericValue;   // ���� ��
-    char binary[9];     // 8��Ʈ ������ ���ڿ�
-    char xorResult[9];  // XOR ��� ������ ���ڿ�
-    char shifted[9];    // Shift Row ���
-    char first4Bits[5]; // ù 4��Ʈ
-    char second4Bits[5];// ��° 4��Ʈ
-    int first4Decimal;  // ù 4��Ʈ�� 10���� ��
-    int second4Decimal; // ��° 4��Ʈ�� 10���� ��
-    int sum1;           // ù �� (first4Decimal + �г��� ����) mod 26
-    int sum2;           // ��° �� (second4Decimal + �г��� ����) mod 26
-    char letter1;       // sum1�� ���ĺ����� ��ȯ�� ���
-    char letter2;       // sum2�� ���ĺ����� ��ȯ�� ���
+    char character;     // 문자
+    int numericValue;   // 숫자 값
+    char binary[9];     // 8비트 이진수 문자열
+    char xorResult[9];  // XOR 결과 이진수 문자열
+    char shifted[9];    // Shift Row 결과
+    char first4Bits[5]; // 첫 4비트
+    char second4Bits[5];// 둘째 4비트
+    int first4Decimal;  // 첫 4비트의 10진수 값
+    int second4Decimal; // 둘째 4비트의 10진수 값
+    int sum1;           // 첫 합 (first4Decimal + 닉네임 숫자) mod 26
+    int sum2;           // 둘째 합 (second4Decimal + 닉네임 숫자) mod 26
+    char letter1;       // sum1을 알파벳으로 변환한 결과
+    char letter2;       // sum2를 알파벳으로 변환한 결과
 } CharInfo;
 
-// ���� ���̺�
+// 섞인 테이블
 int mixedTable[10][10] = {
     {12, 5, 8, 19, 23, 45, 67, 89, 34, 56},
     {78, 90, 11, 22, 33, 44, 55, 66, 77, 88},
@@ -35,63 +35,63 @@ int mixedTable[10][10] = {
     {86, 87, 91, 92, 93, 94, 95, 96, 97, 98}
 };
 
-// ���� -> ���� ��ȯ �Լ�
+// 문자 -> 숫자 변환 함수
 int charToNumeric(char c) {
     if (c >= 'a' && c <= 'z') {
-        return c - 'a'; // 'a'�� 0���� ����
+        return c - 'a'; // 'a'는 0부터 시작
     }
     else if (c >= 'A' && c <= 'Z') {
-        return c - 'A'; // 'A'�� 0���� ����
+        return c - 'A'; // 'A'는 0부터 시작
     }
     else {
-        return -1; // ��ȿ���� ���� ���� ó��
+        return -1; // 유효하지 않은 문자 처리
     }
 }
 
-// ������ 8��Ʈ ������ ���ڿ��� ��ȯ�ϴ� �Լ�
+// 정수를 8비트 이진수 문자열로 변환하는 함수
 void toBinary8Bit(int num, char* binary) {
     for (int i = 7; i >= 0; i--) {
-        binary[i] = (num % 2) + '0'; // �������� �̿��Ͽ� ������ ���
+        binary[i] = (num % 2) + '0'; // 나머지를 이용하여 이진수 계산
         num /= 2;
     }
-    binary[8] = '\0'; // ���ڿ� ���� NULL �߰�
+    binary[8] = '\0'; // 문자열 끝에 NULL 추가
 }
 
-// �� ���� 8��Ʈ ������ ���ڿ��� XOR �����ϴ� �Լ�
+// 두 개의 8비트 이진수 문자열을 XOR 연산하는 함수
 void xorBinaryStrings(char* binary1, char* binary2, char* result) {
     for (int i = 0; i < 8; i++) {
-        // �� ��Ʈ�� ������ ��ȯ�Ͽ� XOR ���� ��, �ٽ� ���ڷ� ��ȯ
+        // 각 비트를 정수로 변환하여 XOR 연산 후, 다시 문자로 변환
         result[i] = ((binary1[i] - '0') ^ (binary2[i] - '0')) + '0';
     }
-    result[8] = '\0'; // ���ڿ� ���� NULL �߰�
+    result[8] = '\0'; // 문자열 끝에 NULL 추가
 }
 
-// 8��Ʈ �������� ��ȯ ����Ʈ�ϴ� �Լ�
+// 8비트 이진수를 순환 시프트하는 함수
 void shiftRow(char* binary, int shiftAmount, int direction) {
-    char temp[9]; // �ӽ� ���� �迭
-    int len = 8;  // 8��Ʈ ���� ����
+    char temp[9]; // 임시 저장 배열
+    int len = 8;  // 8비트 길이 고정
 
-    if (direction == 0) { // ���� ��ȯ ����Ʈ
+    if (direction == 0) { // 왼쪽 순환 시프트
         for (int i = 0; i < len; i++) {
             temp[i] = binary[(i + shiftAmount) % len];
         }
     }
-    else if (direction == 1) { // ������ ��ȯ ����Ʈ
+    else if (direction == 1) { // 오른쪽 순환 시프트
         for (int i = 0; i < len; i++) {
             temp[i] = binary[(i - shiftAmount + len) % len];
         }
     }
 
-    temp[len] = '\0'; // NULL ���� �߰�
-    strcpy(binary, temp); // ���ڿ� ����
+    temp[len] = '\0'; // NULL 문자 추가
+    strcpy(binary, temp); // 문자열 복사
 }
 
-// 8��Ʈ �������� 4��Ʈ�� ������ �Լ�
+// 8비트 이진수를 4비트씩 나누는 함수
 void splitTo4Bits(char* binary, char* first4, char* second4) {
-    strncpy(first4, binary, 4);       // ù 4��Ʈ ����
-    first4[4] = '\0';                      // ���ڿ� ���� NULL �߰�
-    strncpy(second4, binary + 4, 4);  // ���� 4��Ʈ ����
-    second4[4] = '\0';                     // ���ڿ� ���� NULL �߰�
+    strncpy(first4, binary, 4);       // 첫 4비트 복사
+    first4[4] = '\0';                      // 문자열 끝에 NULL 추가
+    strncpy(second4, binary + 4, 4);  // 다음 4비트 복사
+    second4[4] = '\0';                     // 문자열 끝에 NULL 추가
 }
 
 int binaryToDecimal(char* binary) {
@@ -103,16 +103,16 @@ int binaryToDecimal(char* binary) {
     return decimal;
 }
 
-// ���� �ð��� ������ �ÿ� ���� ���� ��ȯ�ϴ� �Լ�
+// 현재 시간을 가져와 시와 분의 합을 반환하는 함수
 int getCurrentTime() {
     time_t now = time(NULL);
     struct tm* local = localtime(&now);
     return local->tm_hour + local->tm_min;
 }
 
-// 4x4 ���̺� �Լ�
+// 4x4 테이블 함수
 int fourByfourTable(int binaryInput) {
-    // ������ ���� 4x4 ���̺� ����
+    // 고정된 랜덤 4x4 테이블 정의
     int table[4][4] = {
         {3, 7, 11, 2},
         {14, 6, 9, 1},
@@ -120,16 +120,16 @@ int fourByfourTable(int binaryInput) {
         {10, 13, 4, 15}
     };
 
-    // �Էµ� 2������ ��� ���� ��ȯ
-    int row = (binaryInput >> 2) & 0x3; // ù 2��Ʈ
-    int col = binaryInput & 0x3;        // �� 2��Ʈ
+    // 입력된 2진수를 행과 열로 변환
+    int row = (binaryInput >> 2) & 0x3; // 첫 2비트
+    int col = binaryInput & 0x3;        // 뒤 2비트
 
     return table[row][col];
 }
 
-// �� 4x4 ���̺� �Լ�
+// 역 4x4 테이블 함수
 int reverseFourByfourTable(int outputValue) {
-    // ������ ���� 4x4 ���̺� ����
+    // 고정된 랜덤 4x4 테이블 정의
     int table[4][4] = {
         {3, 7, 11, 2},
         {14, 6, 9, 1},
@@ -144,46 +144,46 @@ int reverseFourByfourTable(int outputValue) {
             return input;
         }
     }
-    // ���� ã�� ���ߴٸ� -1 ��ȯ
+    // 만약 찾지 못했다면 -1 반환
     return -1;
 }
 
-// ���ڵ� �Լ�
+// 인코딩 함수
 void encodeMessage(const char* nickname, const char* plaintext, char* encryptedText) {
-    // �г����� �� ���ڸ� ���ڷ� ��ȯ
+    // 닉네임의 각 문자를 숫자로 변환
     int nicknameNumeric[100];
     int nicknameLength = strlen(nickname);
     for (int i = 0; i < nicknameLength; i++) {
         int numeric = charToNumeric(nickname[i]);
         if (numeric == -1) {
-            printf("�г����� ���� '%c'�� ��ȯ�� �� �����ϴ�.\n", nickname[i]);
-            encryptedText[0] = '\0'; // ���� ó��
+            printf("닉네임의 문자 '%c'는 변환할 수 없습니다.\n", nickname[i]);
+            encryptedText[0] = '\0'; // 에러 처리
             return;
         }
         nicknameNumeric[i] = numeric;
     }
 
-    // ���� �ð��� �ÿ� �� �� ���
+    // 현재 시간의 시와 분 합 계산
     int timeSum = getCurrentTime();
     char timeBinary[9];
 
-    // �� �ڸ� �ð��� ���ڸ� - ��, ���ڸ� - ���� ���̺� ��ȸ
+    // 두 자리 시간의 앞자리 - 행, 뒷자리 - 열로 테이블 조회
     int crytedTime = mixedTable[(timeSum / 10) % 10][timeSum % 10];
 
-    // ���̺��� ����� ���ڸ� �������� ��ȯ
+    // 테이블을 통과한 숫자를 이진수로 변환
     toBinary8Bit(crytedTime, timeBinary);
 
-    // �Է¹��� ���ڵ��� ������ ����ü �迭
+    // 입력받은 문자들을 저장할 구조체 배열
     CharInfo charInfos[100];
     int charCount = 0;
 
-    int nicknameIndex = 0; // �г��� �ε��� �ʱ�ȭ
+    int nicknameIndex = 0; // 닉네임 인덱스 초기화
 
-    // ���� �� ���� ó��
+    // 평문의 각 문자 처리
     for (int i = 0; i < strlen(plaintext); i++) {
         int numeric = charToNumeric(plaintext[i]);
         if (numeric == -1) {
-            printf("���� '%c'�� ��ȯ�� �� �����ϴ�.\n", plaintext[i]);
+            printf("문자 '%c'는 변환할 수 없습니다.\n", plaintext[i]);
             continue;
         }
 
@@ -191,45 +191,45 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
         info.character = plaintext[i];
         info.numericValue = numeric;
 
-        // ���� ���ڸ� �������� ��ȯ
+        // 평문의 숫자를 이진수로 변환
         toBinary8Bit(numeric, info.binary);
 
-        // ������ XOR ��� ���
+        // 이진수 XOR 결과 계산
         xorBinaryStrings(info.binary, timeBinary, info.xorResult);
 
-        // Shift Row ����
+        // Shift Row 수행
         strcpy(info.shifted, info.xorResult);
-        shiftRow(info.shifted, 2, 0); // �������� 2��Ʈ ����Ʈ
+        shiftRow(info.shifted, 2, 0); // 왼쪽으로 2비트 시프트
 
-        // Shift Row ����� 4��Ʈ�� �и�
+        // Shift Row 결과를 4비트씩 분리
         splitTo4Bits(info.shifted, info.first4Bits, info.second4Bits);
 
-        // 4x4 ���̺� ����
+        // 4x4 테이블 적용
         int firstDecimal = binaryToDecimal(info.first4Bits);
         int CfirstDecimal = fourByfourTable(firstDecimal);
         int secondDecimal = binaryToDecimal(info.second4Bits);
         int CsecondDecimal = fourByfourTable(secondDecimal);
 
-        // 4��Ʈ�� 10������ ��ȯ
+        // 4비트를 10진수로 변환
         info.first4Decimal = CfirstDecimal;
         info.second4Decimal = CsecondDecimal;
 
-        // �г��� ���ڿ� �ջ� �� mod 26
+        // 닉네임 숫자와 합산 후 mod 26
         info.sum1 = (info.first4Decimal + nicknameNumeric[nicknameIndex % nicknameLength]) % 26;
         nicknameIndex++;
         info.sum2 = (info.second4Decimal + nicknameNumeric[nicknameIndex % nicknameLength]) % 26;
         nicknameIndex++;
 
-        // sum1�� sum2�� ���ĺ����� ��ȯ
-        info.letter1 = info.sum1 + 'A'; // �빮�ڷ� ��ȯ
+        // sum1과 sum2를 알파벳으로 변환
+        info.letter1 = info.sum1 + 'A'; // 대문자로 변환
         info.letter2 = info.sum2 + 'A';
 
-        // ����ü �迭�� ����
+        // 구조체 배열에 저장
         charInfos[charCount++] = info;
     }
 
-    // ��ȣȭ�� ����� ������ ���ڿ�
-    encryptedText[0] = '\0'; // �ʱ�ȭ
+    // 암호화된 결과를 저장할 문자열
+    encryptedText[0] = '\0'; // 초기화
     for (int i = 0; i < charCount; i++) {
         int len = strlen(encryptedText);
         encryptedText[len] = charInfos[i].letter1;
@@ -237,59 +237,59 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
         encryptedText[len + 2] = '\0';
     }
 
-    printf("���� �ð� ��: %d\n", timeSum); // ������� ���� �ð� �� ���
+    printf("사용된 시간 합: %d\n", timeSum); // 디버깅을 위해 시간 합 출력
 }
 
-// ���ڵ� �Լ�
+// 디코딩 함수
 void decodeMessage(const char* nickname, const char* encryptedText, char* decryptedText, int timeSum) {
-    // �г����� �� ���ڸ� ���ڷ� ��ȯ
+    // 닉네임의 각 문자를 숫자로 변환
     int nicknameNumeric[100];
     int nicknameLength = strlen(nickname);
     for (int i = 0; i < nicknameLength; i++) {
         int numeric = charToNumeric(nickname[i]);
         if (numeric == -1) {
-            printf("�г����� ���� '%c'�� ��ȯ�� �� �����ϴ�.\n", nickname[i]);
-            decryptedText[0] = '\0'; // ���� ó��
+            printf("닉네임의 문자 '%c'는 변환할 수 없습니다.\n", nickname[i]);
+            decryptedText[0] = '\0'; // 에러 처리
             return;
         }
         nicknameNumeric[i] = numeric;
     }
 
-    // �ð� �����κ��� timeBinary ����
+    // 시간 합으로부터 timeBinary 생성
     char timeBinary[9];
     int crytedTime = mixedTable[(timeSum / 10) % 10][timeSum % 10];
     toBinary8Bit(crytedTime, timeBinary);
 
-    int nicknameIndex = 0; // �г��� �ε��� �ʱ�ȭ
+    int nicknameIndex = 0; // 닉네임 인덱스 초기화
     int decryptedIndex = 0;
 
-    // ��ȣ���� �� ���� �� ó��
+    // 암호문의 각 문자 쌍 처리
     for (int i = 0; i < strlen(encryptedText); i += 2) {
-        // sum1�� sum2 ����
+        // sum1과 sum2 복원
         int sum1 = charToNumeric(encryptedText[i]);
         int sum2 = charToNumeric(encryptedText[i + 1]);
 
         if (sum1 == -1 || sum2 == -1) {
-            printf("��ȣ���� ���� '%c' �Ǵ� '%c'�� ��ȯ�� �� �����ϴ�.\n", encryptedText[i], encryptedText[i + 1]);
+            printf("암호문의 문자 '%c' 또는 '%c'는 변환할 수 없습니다.\n", encryptedText[i], encryptedText[i + 1]);
             continue;
         }
 
-        // �г��� ���ڿ��� ������
+        // 닉네임 숫자와의 역연산
         int CfirstDecimal = (sum1 - nicknameNumeric[nicknameIndex % nicknameLength] + 26) % 26;
         nicknameIndex++;
         int CsecondDecimal = (sum2 - nicknameNumeric[nicknameIndex % nicknameLength] + 26) % 26;
         nicknameIndex++;
 
-        // 4x4 ���̺��� ����ȯ
+        // 4x4 테이블의 역변환
         int firstDecimal = reverseFourByfourTable(CfirstDecimal);
         int secondDecimal = reverseFourByfourTable(CsecondDecimal);
 
         if (firstDecimal == -1 || secondDecimal == -1) {
-            printf("4x4 ���̺����� ����ȯ�� �� �����ϴ�.\n");
+            printf("4x4 테이블에서 역변환할 수 없습니다.\n");
             continue;
         }
 
-        // 4��Ʈ �������� ��ȯ
+        // 4비트 이진수로 변환
         char first4Bits[5], second4Bits[5];
         for (int j = 3; j >= 0; j--) {
             first4Bits[j] = (firstDecimal % 2) + '0';
@@ -303,56 +303,56 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
         }
         second4Bits[4] = '\0';
 
-        // ������ ����
+        // 이진수 결합
         char shifted[9];
         strcpy(shifted, first4Bits);
         strcat(shifted, second4Bits);
 
-        // ��ȯ ����Ʈ ���� (���������� 2��Ʈ)
+        // 순환 시프트 복원 (오른쪽으로 2비트)
         char xorResult[9];
         strcpy(xorResult, shifted);
-        shiftRow(xorResult, 2, 1); // ���������� 2��Ʈ ����Ʈ
+        shiftRow(xorResult, 2, 1); // 오른쪽으로 2비트 시프트
 
-        // XOR ���� ����
+        // XOR 연산 복원
         char binary[9];
         xorBinaryStrings(xorResult, timeBinary, binary);
 
-        // �������� 10������ ��ȯ
+        // 이진수를 10진수로 변환
         int numericValue = binaryToDecimal(binary);
 
-        // ���ڸ� ���ڷ� ��ȯ
-        char character = numericValue + 'a'; // �빮�ڷ� ��ȯ
+        // 숫자를 문자로 변환
+        char character = numericValue + 'a'; // 대문자로 변환
 
         decryptedText[decryptedIndex++] = character;
     }
-    decryptedText[decryptedIndex] = '\0'; // ���ڿ� ���� NULL �߰�
+    decryptedText[decryptedIndex] = '\0'; // 문자열 끝에 NULL 추가
 }
 
 int main() {
     char nickname[100];
-    printf("�г����� �Է��ϼ���: ");
+    printf("닉네임을 입력하세요: ");
     fgets(nickname, sizeof(nickname), stdin);
-    nickname[strcspn(nickname, "\n")] = '\0'; // ���� ���� ����
+    nickname[strcspn(nickname, "\n")] = '\0'; // 개행 문자 제거
 
     char plaintext[100];
-    printf("���� �Է��ϼ���: ");
+    printf("평문을 입력하세요: ");
     fgets(plaintext, sizeof(plaintext), stdin);
-    plaintext[strcspn(plaintext, "\n")] = '\0'; // ���� ���� ����
+    plaintext[strcspn(plaintext, "\n")] = '\0'; // 개행 문자 제거
 
     char encryptedText[200];
     encodeMessage(nickname, plaintext, encryptedText);
 
-    printf("��ȣȭ�� ���: %s\n", encryptedText);
+    printf("암호화된 결과: %s\n", encryptedText);
 
-    // ���ڵ� ����
+    // 디코딩 과정
     char decryptedText[100];
     int timeSum;
-    printf("��ȣȭ�� ���� �ð� ���� �Է��ϼ���: ");
+    printf("암호화에 사용된 시간 합을 입력하세요: ");
     scanf("%d", &timeSum);
 
     decodeMessage(nickname, encryptedText, decryptedText, timeSum);
 
-    printf("��ȣȭ�� ���: %s\n", decryptedText);
+    printf("복호화된 결과: %s\n", decryptedText);
 
     return 0;
 }

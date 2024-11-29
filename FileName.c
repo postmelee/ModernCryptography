@@ -350,6 +350,12 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
     decryptedText[decryptedIndex] = '\0'; // 문자열 끝에 NULL 추가
 }
 
+void encryptTransmissionTime(int transmissionTime, int serverTime, char* encryptedTime) {
+    // 전송 시간과 서버 시간을 XOR 연산하여 암호화
+    int encryptedValue = transmissionTime ^ serverTime;
+    sprintf(encryptedTime, "%08X", encryptedValue); // 16진수 문자열로 변환
+}
+
 int main() {
     char nickname[100];
     printf("닉네임을 입력하세요: ");
@@ -364,6 +370,26 @@ int main() {
     char encryptedText[200];
     encodeMessage(nickname, plaintext, encryptedText);
 
+        // 전송 시간 추가 (분 단위)
+    time_t now = time(NULL);
+    struct tm* local = localtime(&now);
+    int transmissionTime = local->tm_hour * 60 + local->tm_min; // 현재 시간을 분 단위로 획득
+    char transmissionTimeStr[20];
+    sprintf(transmissionTimeStr, "%d", transmissionTime);
+
+    // 서버 접속 시간 획득 (분 단위)
+    now = time(NULL);
+    local = localtime(&now);
+    int serverTime = local->tm_hour * 60 + local->tm_min; // 서버 접속 시간을 분 단위로 획득
+
+    // 전송 시간 암호화
+    char encryptedTransmissionTime[20];
+    encryptTransmissionTime(transmissionTime, serverTime, encryptedTransmissionTime);
+
+    // 암호화된 전송 시간 추가
+    strcat(encryptedText, "|"); // 구분자 추가
+    strcat(encryptedText, encryptedTransmissionTime);
+
     printf("암호화된 결과: %s\n", encryptedText);
 
     // 디코딩 과정
@@ -371,6 +397,11 @@ int main() {
     int timeSum;
     printf("암호화에 사용된 시간 합을 입력하세요: ");
     scanf("%d", &timeSum);
+
+     // 암호문과 전송 시간 분리
+    char* encryptedMessage = strtok(encryptedText, "|");
+    char* encryptedTime = strtok(NULL, "|");
+
 
     decodeMessage(nickname, encryptedText, decryptedText, timeSum);
 

@@ -321,7 +321,7 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
         int numericValue = binaryToDecimal(binary);
 
         // 숫자를 문자로 변환
-        char character = numericValue + 'A'; // 대문자로 변환
+        char character = numericValue + 'a'; // 대문자로 변환
 
         decryptedText[decryptedIndex++] = character;
     }

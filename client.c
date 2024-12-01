@@ -394,8 +394,8 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
 }
 
 int getTimeNow() { // 4자리의 24시간 형식 시간을 가져오는 함수
-    now = time(NULL);
-    local = localtime(&now);
+    time_t now = time(NULL);
+    struct tm* local = localtime(&now);
     int serverTime = local->tm_hour * 100 + local->tm_min;
     return serverTime;
 }
@@ -508,8 +508,8 @@ int main(int argc, char **argv) {
 
         // 메세지 전송
         printf("\n보낼 메시지 : ");
-        gets(message);
-		fflush(stdin);
+        fgets(message);
+        message[strcpn(message, "\n")] = '\0'; // 개행 문자 제거
 		
         // 해시 암호화
         char encryptedTransmissionTime[20];
@@ -538,8 +538,7 @@ int main(int argc, char **argv) {
             break;
         }
 		
-		printf("받은 메시지 : %s", message);
-		fflush(stdin);
+		printf("받은 암호 메시지 : %s", message);
 
         decodeMessage(opponentNickname, message, decryptedText, getCurrentTime());
 

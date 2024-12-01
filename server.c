@@ -395,11 +395,12 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
 }
 
 int getTimeNow() { // 4자리의 24시간 형식 시간을 가져오는 함수
-    now = time(NULL);
-    local = localtime(&now);
+    time_t now = time(NULL);
+    struct tm* local = localtime(&now);
     int serverTime = local->tm_hour * 100 + local->tm_min;
     return serverTime;
 }
+
 void encryptTransmissionTime(int serverTime, char* encryptedTime) {
     // 전송 시간과 서버 시간을 XOR 연산하여 암호화
     sprintf(encryptedTime, "%08X", serverTime); // 16진수 문자열로 변환

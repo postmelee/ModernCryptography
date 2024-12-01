@@ -44,6 +44,9 @@ int charToNumeric(char c) {
     else if (c >= 'A' && c <= 'Z') {
         return c - 'A'; // 'A'는 0부터 시작
     }
+    else if (c >= '0' && c <= '9') { // 숫자 
+        return c - '0';
+    }
     else {
         return -1; // 유효하지 않은 문자 처리
     }
@@ -177,7 +180,7 @@ void nicknameToNumeric(const char* nickname, int result[]) {
     }
 }
 // 인코딩 함수
-void encodeMessage(const char* nickname, const char* plaintext, char* encryptedText) {
+int encodeMessage(const char* nickname, const char* plaintext, char* encryptedText) {
 
     int nicknameNumeric[100];
     int nicknameLength = strlen(nickname);
@@ -186,7 +189,7 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
         if (numeric == -1) {
             printf("닉네임의 문자 '%c'는 변환할 수 없습니다.\n", nickname[i]);
             encryptedText[0] = '\0';  // 에러 처리
-            return;
+            return -1;
         }
         nicknameNumeric[i] = numeric;
     }
@@ -232,6 +235,7 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
 
         for(int round=0; round<roundNum; round++) {
             int nicknameIndex = 0; // 닉네임 인덱스 초기화
+
             // Shift Row 수행
             strcpy(info.shifted, result);
             shiftRow(info.shifted, 2, 0); // 왼쪽으로 2비트 시프트
@@ -246,8 +250,6 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
             info.first4Decimal = fourByfourTable(firstDecimal);
             info.second4Decimal = fourByfourTable(secondDecimal);
 
-                // 버지니아 
-
             // 닉네임 숫자와 합산 후 mod 26 (버지니아)
             int nicknameLength = strlen(nickname);
             info.sum1 = (info.first4Decimal + nicknameNumeric[nicknameIndex % nicknameLength]) % 16;
@@ -260,10 +262,7 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
             toBinary4Bit(info.sum2, second4Bits);
             join4BitsTo8Bit(result, first4Bits, second4Bits);
 
-            // printf("Round %d: %s\n", round, result);
         }
-        // 전송
-        // sum1과 sum2를 알파벳으로 변환
         char firstResult4Bits[5]; char secondResult4Bits[5];
 
         splitTo4Bits(result, firstResult4Bits, secondResult4Bits);
@@ -285,6 +284,7 @@ void encodeMessage(const char* nickname, const char* plaintext, char* encryptedT
     }
 
     printf("사용된 시간 합: %d\n", timeSum); // 디버깅을 위해 시간 합 출력
+    return timeSum;
 }
 
 // 디코딩 함수
@@ -312,24 +312,29 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
     // 암호문의 각 문자 쌍 처리
     for (int i = 0; i < strlen(encryptedText); i+=2) {
         int roundNum = 3;
-
-
+        
+        // 암호문을 해당하는 10진수로 변환
         int sum1 = charToNumeric(encryptedText[i]);
         int sum2 = charToNumeric(encryptedText[i+1]);
 
+        // 해당 10진수를 4비트 2진수로 변환
         char firstSum4Bits[5]; char secondSumBits[5];
         toBinary4Bit(sum1, firstSum4Bits);
         toBinary4Bit(sum2, secondSumBits);
 
+        // 해당 4비트 2진수들을 붙여서 8비트로 변환
         char roundResult[9];
         join4BitsTo8Bit(roundResult, firstSum4Bits, secondSumBits);
 
         // Round start
         for (int round = 0; round<roundNum; round++) {
             int nicknameIndex = 0; // 닉네임 인덱스 초기화
-            // 문자를 10진수로 변환, 찢기
+
+            // 8비트를 4비트로 분할
             char roundFirst4Bits[5]; char roundSecond4Bits[5];
             splitTo4Bits(roundResult, roundFirst4Bits, roundSecond4Bits);
+
+            // 각 4비트 2진수를 10진수로 변환
             int sum1 = binaryToDecimal(roundFirst4Bits);
             int sum2 = binaryToDecimal(roundSecond4Bits);
 
@@ -377,11 +382,24 @@ void decodeMessage(const char* nickname, const char* encryptedText, char* decryp
     decryptedText[decryptedIndex] = '\0'; // 문자열 끝에 NULL 추가
 }
 
-void encryptTransmissionTime(int transmissionTime, int serverTime, char* encryptedTime) {
+void encryptTransmissionTime(int serverTime, char* encryptedTime) {
     // 전송 시간과 서버 시간을 XOR 연산하여 암호화
-    int encryptedValue = transmissionTime ^ serverTime;
-    sprintf(encryptedTime, "%08X", encryptedValue); // 16진수 문자열로 변환
+    sprintf(encryptedTime, "%08X", serverTime); // 16진수 문자열로 변환
 }
+
+void decryptTransmissionTime(char* timeChar) {
+    for(int i=0; i<strlen(timeChar); i++) {
+        timeChar[i] = charToNumeric(timeChar[i]) + '0';
+    }
+}
+
+void splitTransmissionTimeAndMessage(char* decryptedTransmissionTime, char* decryptedText) {
+    strcpy(decryptedTransmissionTime, &decryptedText[strlen(decryptedText) - 8]);
+    decryptTransmissionTime(decryptedTransmissionTime);
+    decryptedText[strlen(decryptedText) - 8] = '\0';
+    printf("dT: %s\n", decryptedTransmissionTime);
+}
+
 
 int main() {
     char nickname[100];
@@ -395,7 +413,6 @@ int main() {
     plaintext[strcspn(plaintext, "\n")] = '\0'; // 개행 문자 제거
 
     char encryptedText[200];
-    encodeMessage(nickname, plaintext, encryptedText);
 
         // 전송 시간 추가 (분 단위)
     time_t now = time(NULL);
@@ -403,19 +420,24 @@ int main() {
     int transmissionTime = local->tm_hour * 60 + local->tm_min; // 현재 시간을 분 단위로 획득
     char transmissionTimeStr[20];
     sprintf(transmissionTimeStr, "%d", transmissionTime);
+    printf("time: %d\n", transmissionTime);
 
     // 서버 접속 시간 획득 (분 단위)
     now = time(NULL);
     local = localtime(&now);
-    int serverTime = local->tm_hour * 60 + local->tm_min; // 서버 접속 시간을 분 단위로 획득
+    int serverTime = local->tm_hour * 100 + local->tm_min; // 서버 접속 시간을 분 단위로 획득
+
+    printf("time: %d\n", serverTime);
+
 
     // 전송 시간 암호화
     char encryptedTransmissionTime[20];
-    encryptTransmissionTime(transmissionTime, serverTime, encryptedTransmissionTime);
 
+    encryptTransmissionTime(serverTime, encryptedTransmissionTime);
     // 암호화된 전송 시간 추가
-    // strcat(encryptedText, "|"); // 구분자 추가
-    // strcat(encryptedText, encryptedTransmissionTime);
+    strcat(plaintext, encryptedTransmissionTime);
+    printf("암호화전 결과: %s\n", plaintext);
+    int time = encodeMessage(nickname, plaintext, encryptedText);
 
     printf("암호화된 결과: %s\n", encryptedText);
 
@@ -428,10 +450,12 @@ int main() {
      // 암호문과 전송 시간 분리
     // char* encryptedMessage = strtok(encryptedText, "|");
     // char* encryptedTime = strtok(NULL, "|");
-
+    char decryptedTransmissionTime[20];
 
     decodeMessage(nickname, encryptedText, decryptedText, timeSum);
-
+    
+    splitTransmissionTimeAndMessage(decryptedTransmissionTime, decryptedText);
+    printf("해시 비교 결과: %d\n", strcmp(encryptedTransmissionTime, decryptedTransmissionTime));
     printf("복호화된 결과: %s\n", decryptedText);
 
     return 0;
